@@ -100,15 +100,13 @@
     width: var(--card-width);
     height: var(--card-height);
     border-radius: var(--card-radius);
-    background: #1c1c1c;
+    background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.04);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+    perspective: 1000px;
   }
 
+  /* Center divider seam */
   .flip-card::after {
     content: '';
     position: absolute;
@@ -116,28 +114,170 @@
     top: 50%;
     height: 3px;
     background: #000000;
-    z-index: 10;
+    z-index: 20;
     transform: translateY(-50%);
+    pointer-events: none;
   }
 
-  .flip-card::before {
+  /* Static and flipping card halves */
+  .card-half {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50%;
+    overflow: hidden;
+    background: #1c1c1c;
+  }
+
+  .card-half.top {
+    top: 0;
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    border-bottom: 1px solid #000000;
+  }
+
+  .card-half.bottom {
+    bottom: 0;
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+    border-top: 1px solid #000000;
+  }
+
+  /* Realistic shadows using pseudo-elements */
+  .static-bottom::after {
     content: '';
     position: absolute;
-    left: 0; right: 0; top: 0;
-    height: 50%;
-    background: rgba(0, 0, 0, 0.12);
-    z-index: 1;
-    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    z-index: 9;
+    pointer-events: none;
   }
 
+  .flip-card.flip .static-bottom::after {
+    animation: shadowBottom 0.55s ease-in-out;
+  }
+
+  @keyframes shadowBottom {
+    0% { opacity: 0; }
+    40% { opacity: 0.8; }
+    100% { opacity: 0; }
+  }
+
+  .static-top::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    z-index: 9;
+    pointer-events: none;
+  }
+
+  .flip-card.flip .static-top::after {
+    animation: shadowTop 0.55s ease-in-out;
+  }
+
+  @keyframes shadowTop {
+    0% { opacity: 0; }
+    50% { opacity: 0; }
+    100% { opacity: 0.85; }
+  }
+
+  .panel-front::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    z-index: 9;
+    pointer-events: none;
+  }
+
+  .flip-card.flip .panel-front::after {
+    animation: shadowFront 0.55s ease-in-out;
+  }
+
+  @keyframes shadowFront {
+    0% { opacity: 0; }
+    100% { opacity: 0.9; }
+  }
+
+  .panel-back::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    opacity: 1;
+    z-index: 9;
+    pointer-events: none;
+  }
+
+  .flip-card.flip .panel-back::after {
+    animation: shadowBack 0.55s ease-in-out;
+  }
+
+  @keyframes shadowBack {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Rotating Panel */
+  .flipping-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50%;
+    transform-origin: top center;
+    transform-style: preserve-3d;
+    z-index: 15;
+    transform: rotateX(0deg);
+  }
+
+  .panel-front, .panel-back {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    backface-visibility: hidden;
+    background: #1c1c1c;
+  }
+
+  .panel-front {
+    z-index: 2;
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+    border-top: 1.5px solid #000000;
+  }
+
+  .panel-back {
+    z-index: 1;
+    transform: rotateX(180deg);
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    border-bottom: 1.5px solid #000000;
+  }
+
+  /* Numbers text styling */
   .flip-num {
     font-size: var(--font-size);
     font-weight: 900;
     color: #e2e2e2;
-    line-height: 1;
     letter-spacing: -0.06em;
     z-index: 5;
-    position: relative;
+    position: absolute;
+    width: 100%;
+    height: var(--card-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .top .flip-num, .panel-back .flip-num {
+    top: 0;
+  }
+
+  .bottom .flip-num, .panel-front .flip-num {
+    bottom: 0;
   }
 
   .am-pm {
@@ -149,7 +289,7 @@
     font-family: 'Inter', sans-serif;
     font-weight: 800;
     letter-spacing: 0.5px;
-    z-index: 6;
+    z-index: 25;
   }
 
   .colon {
@@ -160,16 +300,18 @@
     margin-bottom: clamp(0px, 0vw, 0px);
     align-self: center;
   }
-
-  .flip-card.flip {
-    animation: flipAnim 0.35s ease;
+  /* Animation Trigger */
+  .flip-card.flip .flipping-panel {
+    animation: flipUp 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
-  @keyframes flipAnim {
-    0%   { transform: scaleY(1); }
-    30%  { transform: scaleY(0.92); }
-    60%  { transform: scaleY(0.96); }
-    100% { transform: scaleY(1); }
+  @keyframes flipUp {
+    0% {
+      transform: rotateX(0deg);
+    }
+    100% {
+      transform: rotateX(-180deg);
+    }
   }
 
   /* Controls — fade in/out */
@@ -334,12 +476,51 @@
           card.appendChild(ap);
         }
 
-        const num = document.createElement('div');
-        num.className = 'flip-num';
-        num.id = id + '-num';
-        num.textContent = '00';
-        card.appendChild(num);
+        // Static Top half (CURRENT top)
+        const staticTop = document.createElement('div');
+        staticTop.className = 'card-half top static-top';
+        const topNum = document.createElement('div');
+        topNum.className = 'flip-num';
+        topNum.id = id + '-top-num';
+        topNum.textContent = '00';
+        staticTop.appendChild(topNum);
+        card.appendChild(staticTop);
 
+        // Static Bottom half (NEXT bottom)
+        const staticBottom = document.createElement('div');
+        staticBottom.className = 'card-half bottom static-bottom';
+        const bottomNum = document.createElement('div');
+        bottomNum.className = 'flip-num';
+        bottomNum.id = id + '-bottom-num';
+        bottomNum.textContent = '00';
+        staticBottom.appendChild(bottomNum);
+        card.appendChild(staticBottom);
+
+        // Flipping Panel
+        const flippingPanel = document.createElement('div');
+        flippingPanel.className = 'flipping-panel';
+
+        // Front (CURRENT bottom)
+        const panelFront = document.createElement('div');
+        panelFront.className = 'panel-front';
+        const frontNum = document.createElement('div');
+        frontNum.className = 'flip-num';
+        frontNum.id = id + '-front-num';
+        frontNum.textContent = '00';
+        panelFront.appendChild(frontNum);
+        flippingPanel.appendChild(panelFront);
+
+        // Back (NEXT top)
+        const panelBack = document.createElement('div');
+        panelBack.className = 'panel-back';
+        const backNum = document.createElement('div');
+        backNum.className = 'flip-num';
+        backNum.id = id + '-back-num';
+        backNum.textContent = '00';
+        panelBack.appendChild(backNum);
+        flippingPanel.appendChild(panelBack);
+
+        card.appendChild(flippingPanel);
         clock.appendChild(card);
       }
     });
@@ -349,14 +530,43 @@
 
   function updateCard(id, val) {
     if (prevVals[id] === val) return;
+    const oldVal = prevVals[id] || '00';
     prevVals[id] = val;
-    const numEl = document.getElementById(id + '-num');
+    
     const card = document.getElementById(id);
-    if (!numEl || !card) return;
-    numEl.textContent = val;
+    if (!card) return;
+
+    const staticTop = card.querySelector('.static-top .flip-num');
+    const staticBottom = card.querySelector('.static-bottom .flip-num');
+    const panel = card.querySelector('.flipping-panel');
+    const panelFront = card.querySelector('.panel-front .flip-num');
+    const panelBack = card.querySelector('.panel-back .flip-num');
+
+    if (!staticTop || !staticBottom || !panel || !panelFront || !panelBack) {
+      return;
+    }
+
+    // Set numbers for 3D flip animation
+    staticTop.textContent = oldVal;
+    panelFront.textContent = oldVal;
+    staticBottom.textContent = val;
+    panelBack.textContent = val;
+
+    // Trigger flip animation
     card.classList.remove('flip');
     void card.offsetWidth;
     card.classList.add('flip');
+
+    // Sync transition cleanup
+    const onAnimationEnd = (e) => {
+      if (e.animationName !== 'flipUp') return;
+      card.classList.remove('flip');
+      staticTop.textContent = val;
+      panelFront.textContent = val;
+      panel.removeEventListener('animationend', onAnimationEnd);
+    };
+
+    panel.addEventListener('animationend', onAnimationEnd);
   }
 
   function tick() {
